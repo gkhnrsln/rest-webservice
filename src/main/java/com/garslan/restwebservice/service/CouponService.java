@@ -62,7 +62,7 @@ public class CouponService {
 
     public Coupon createCoupon(Coupon coupon) {
         checkExistingCoupon(coupon);
-        // pruefe, ob EAN richtige Format besitzt
+        
         if (coupon.getId().matches("^98(1|2)\\d{10}$")) {
             coupons.add(coupon);
             return coupon;
