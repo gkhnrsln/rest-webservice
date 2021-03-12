@@ -1,5 +1,6 @@
 package com.garslan.restwebservice.service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class CouponService {
-    private static List<Coupon> coupons;
+    private List<Coupon> coupons;
 
     public List<Coupon> getCoupons() {
         initCoupons();
@@ -19,10 +20,11 @@ public class CouponService {
     }
 
     public List<Coupon> getActiveCoupons() {
-        Calendar today = new GregorianCalendar();
+        LocalDateTime today = LocalDateTime.now();
+
         List<Coupon> activeCoupons = new ArrayList<>();
         for (Coupon c : coupons) {
-            if (c.isActive() && (!today.before(c.getStartDatum()) && !today.after(c.getEndDatum()))) {
+            if (c.isActive() && (!today.isBefore(c.getStartDate()) && !today.isAfter(c.getEndDate()))) {
                 activeCoupons.add(c);
             }
         }
@@ -33,18 +35,18 @@ public class CouponService {
         if (coupons == null) {
             Coupon coupon = new Coupon();
             coupon.setId("981" + "1234567890");
-            coupon.setAktionsName("0.50 € Rabatt auf Coca Cola");
-            coupon.setStartDatum(new GregorianCalendar(2021, 0, 20));
-            coupon.setEndDatum(new GregorianCalendar(2021, 3, 20));
-            coupon.setRabatt(0.5);
+            coupon.setCampaignName("0.50 € Rabatt auf Coca Cola");
+            coupon.setStartDate(LocalDateTime.parse("2021-01-20T00:00:00"));
+            coupon.setEndDate(LocalDateTime.parse("2021-04-20T00:00:00"));
+            coupon.setDiscount(50);
             coupon.setActive(true);
 
             Coupon coupon2 = new Coupon();
             coupon2.setId("982" + "0987654321");
-            coupon2.setAktionsName("0.25 € Rabatt auf eine Pepsi");
-            coupon2.setStartDatum(new GregorianCalendar(2019, 0, 20));
-            coupon2.setEndDatum(new GregorianCalendar(2020, 3, 20));
-            coupon2.setRabatt(0.25);
+            coupon2.setCampaignName("0.25 € Rabatt auf eine Pepsi");
+            coupon2.setStartDate(LocalDateTime.parse("2019-01-20T00:00:00"));
+            coupon2.setEndDate(LocalDateTime.parse("2020-04-20T00:00:00"));
+            coupon2.setDiscount(25);
             coupon2.setActive(true);
 
             coupons = new ArrayList<>();
