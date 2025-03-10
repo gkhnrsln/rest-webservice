@@ -2,6 +2,7 @@ package com.garslan.restwebservice.service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.garslan.restwebservice.exception.EntityAlreadyExistsException;
@@ -13,6 +14,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class CouponService {
     private List<Coupon> coupons;
+    private static final Pattern COUPON_ID_PATTERN = Pattern.compile("^98(1|2)\\d{10}$");
+
+    private void initCoupons() {
+        if (coupons == null) {
+            coupons = new ArrayList<>();
+            coupons.add(createSampleCoupon("9811234567890", "0.50 € Rabatt auf Coca Cola", "2021-01-20T00:00:00", "2021-04-20T00:00:00", 50, true));
+            coupons.add(createSampleCoupon("9820987654321", "0.25 € Rabatt auf eine Pepsi", "2019-01-20T00:00:00", "2020-04-20T00:00:00", 25, true));
+        }
+    }
 
     public List<Coupon> getCoupons() {
         initCoupons();
@@ -22,68 +32,66 @@ public class CouponService {
     public List<Coupon> getActiveCoupons() {
         LocalDateTime today = LocalDateTime.now();
 
-        List<Coupon> activeCoupons = new ArrayList<>();
-        for (Coupon c : coupons) {
-            if (c.isActive() && (!today.isBefore(c.getStartDate()) && !today.isAfter(c.getEndDate()))) {
-                activeCoupons.add(c);
-            }
-        }
-        return activeCoupons;
+        return coupons.stream()
+                .filter(c -> c.isActive() && !today.isBefore(c.getStartDate()) && !today.isAfter(c.getEndDate()))
+                .collect(Collectors.toList());
     }
 
-    private void initCoupons() {
-        if (coupons == null) {
-            Coupon coupon = new Coupon();
-            coupon.setId("981" + "1234567890");
-            coupon.setCampaignName("0.50 € Rabatt auf Coca Cola");
-            coupon.setStartDate(LocalDateTime.parse("2021-01-20T00:00:00"));
-            coupon.setEndDate(LocalDateTime.parse("2021-04-20T00:00:00"));
-            coupon.setDiscount(50);
-            coupon.setActive(true);
+    private Coupon createSampleCoupon(String id, String campaignName, String startDate, String endDate, int discount, boolean isActive) {
+        Coupon coupon = new Coupon();
+        coupon.setId(id);
+        coupon.setCampaignName(campaignName);
+        coupon.setStartDate(LocalDateTime.parse(startDate));
+        coupon.setEndDate(LocalDateTime.parse(endDate));
+        coupon.setDiscount(discount);
+        coupon.setActive(isActive);
 
-            Coupon coupon2 = new Coupon();
-            coupon2.setId("982" + "0987654321");
-            coupon2.setCampaignName("0.25 € Rabatt auf eine Pepsi");
-            coupon2.setStartDate(LocalDateTime.parse("2019-01-20T00:00:00"));
-            coupon2.setEndDate(LocalDateTime.parse("2020-04-20T00:00:00"));
-            coupon2.setDiscount(25);
-            coupon2.setActive(true);
-
-            coupons = new ArrayList<>();
-            coupons.add(coupon);
-            coupons.add(coupon2);
-        }
+        return coupon;
     }
 
     public Coupon getCouponById(String id) {
-        return coupons.stream().filter(cou -> cou.getId().equals(id)).findFirst()
+        return coupons.stream()
+                .filter(cou -> cou.getId().equals(id))
+                .findFirst()
                 .orElseThrow(() -> new EntityNotFoundException(String.format("Coupon not found with id: %s", id)));
     }
 
     public Coupon createCoupon(Coupon coupon) {
         checkExistingCoupon(coupon);
         
-        if (coupon.getId().matches("^98(1|2)\\d{10}$")) {
-            coupons.add(coupon);
-            return coupon;
-        } else {
-            throw new EntityAlreadyExistsException(String.format("Coupon with id: %s has false format", coupon.getId()));
+        if (!COUPON_ID_PATTERN.matcher(coupon.getId()).matches()) {
+            throw new IllegalArgumentException(String.format("Coupon with id: %s has an invalid format", coupon.getId()));
         }
+        
+        coupons.add(coupon);
+        
+        return coupon;
     }
 
     private void checkExistingCoupon(Coupon coupon) {
         coupons.stream()
-                .filter(cou -> cou.getId().equals(coupon.getId()))
+                .filter(c -> c.getId().equals(coupon.getId()))
                 .findFirst()
-                .ifPresent(cou -> {
-                    throw new EntityAlreadyExistsException(String.format("Coupon with id: %s is already existing", coupon.getId()));
+                .ifPresent(c -> {
+                    throw new EntityAlreadyExistsException(String.format("Coupon with id: %s is already existing", c.getId()));
                 });
-
     }
 
     public void deleteCoupon(String id) {
-        coupons = coupons.stream()
-                .filter(coupon -> !coupon.getId().equals(id))
-                .collect(Collectors.toList());
+        boolean removed = coupons.removeIf(c -> c.getId().equals(id));
+
+        if (!removed) {
+            throw new EntityNotFoundException(String.format("Coupon with id: %s not found", id));
+        }
+    }
+
+    public Coupon updateCoupon(Coupon updatedCoupon) {
+        for (int i = 0; i < coupons.size(); i++) {
+            if(coupons.get(i).getId().equals(updatedCoupon.getId())) {
+                coupons.set(i, updatedCoupon);
+                return updatedCoupon;
+            }
+        }
+        throw new EntityNotFoundException(String.format("Coupon with id: %s not found", updatedCoupon.getId()));
     }
 }

@@ -26,41 +26,56 @@ public class CouponController {
 
     @PostMapping
     public ResponseEntity<Coupon> createCoupon(@RequestBody Coupon coupon) {
-        return new ResponseEntity<>(couponService.createCoupon(coupon), HttpStatus.CREATED);
+        Coupon createdCoupon = couponService.createCoupon(coupon);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdCoupon);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Coupon> updateCoupon(@PathVariable String id, @RequestBody Coupon coupon){
         Coupon updatedCoupon = couponService.getCouponById(id);
+        if (updatedCoupon == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
         updatedCoupon.setActive(coupon.isActive());
         updatedCoupon.setCampaignName(coupon.getCampaignName());
         updatedCoupon.setEndDate(coupon.getEndDate());
         updatedCoupon.setStartDate(coupon.getStartDate());
         updatedCoupon.setDiscount(coupon.getDiscount());
-        return new ResponseEntity<>(HttpStatus.valueOf(200));
+        couponService.updateCoupon(updatedCoupon);
+
+        return ResponseEntity.ok(updatedCoupon);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCoupon(@PathVariable String id) {
         couponService.deleteCoupon(id);
+        
+
         return new ResponseEntity<>(HttpStatus.valueOf(204));
     }
 
     @GetMapping
     public ResponseEntity<List<Coupon>> getCoupons() {
         List<Coupon> coupons = couponService.getCoupons();
-        return new ResponseEntity<>(coupons, HttpStatus.OK);
+
+        return ResponseEntity.ok(coupons);
     }
     
     @GetMapping("/active")
     public ResponseEntity<List<Coupon>> getActiveCoupons() {
         List<Coupon> coupons = couponService.getActiveCoupons();
-        return new ResponseEntity<>(coupons, HttpStatus.OK);
+
+        return ResponseEntity.ok(coupons);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Coupon> getCouponById(@PathVariable String id) {
         Coupon coupon = couponService.getCouponById(id);
-        return new ResponseEntity<>(coupon, HttpStatus.OK);
+        if (coupon == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        return ResponseEntity.ok(coupon);
     }
 }
