@@ -48,11 +48,15 @@ public class CouponController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCoupon(@PathVariable String id) {
+    public ResponseEntity<Coupon> deleteCoupon(@PathVariable String id) {
+        Coupon deletedCoupon = couponService.getCouponById(id);
+        if (deletedCoupon == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
         couponService.deleteCoupon(id);
         
-
-        return new ResponseEntity<>(HttpStatus.valueOf(204));
+        return ResponseEntity.ok(deletedCoupon);
     }
 
     @GetMapping
